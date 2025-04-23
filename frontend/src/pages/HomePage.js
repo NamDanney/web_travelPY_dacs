@@ -1,11 +1,20 @@
 import React from 'react';
+import HeroSection from '../components/HomePages/HeroSection';
+import '../styles/HomePageCSS/HomePage.css'; // Đường dẫn đã được sửa
+import AboutSection from '../components/HomePages/AboutSection';
+import DestinationsSection from '../components/HomePages/DestinationsSection';
+import TravelPlanSection from '../components/HomePages/TravelPlanSection';
+import TestimonialsSection from '../components/HomePages/TestimonialsSection';
 
 const HomePage = () => {
     return (
-        <div>
-            <h1>Welcome to Travel Explorer</h1>
-            <p>Explore amazing destinations!</p>
-        </div>
+        <>
+            <HeroSection />
+            <AboutSection />
+            <DestinationsSection />
+            <TravelPlanSection />
+            <TestimonialsSection />
+        </>
     );
 };
 
