@@ -1,26 +1,30 @@
-// filepath: d:\WEB_TRAVEL\my-app\backend\config\db.js
-const { Sequelize } = require('sequelize');
-const dotenv = require('dotenv');
+const mysql = require('mysql2/promise');
+require('dotenv').config();
 
-// Load environment variables from .env file
-dotenv.config();
-
-// Create a Sequelize instance
-const sequelize = new Sequelize(process.env.DB_NAME, process.env.DB_USER, process.env.DB_PASSWORD, {
+// Cấu hình kết nối MySQL
+const dbConfig = {
     host: process.env.DB_HOST,
-    port: 3306, // Thay đổi cổng nếu cần
-    dialect: 'mysql',
-    logging: false, // Disable logging for cleaner output
-});
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME,
+    port: process.env.DB_PORT,
+    waitForConnections: true,
+    connectionLimit: 10,
+    queueLimit: 0
+};
 
-// Test the connection
-sequelize
-    .authenticate()
-    .then(() => {
-        console.log('Connection to the database has been established successfully.');
-    })
-    .catch((error) => {
-        console.error('Unable to connect to the database:', error);
-    });
+// Tạo pool kết nối
+const pool = mysql.createPool(dbConfig);
 
-module.exports = sequelize;
+// Kiểm tra kết nối
+async function checkConnection() {
+    try {
+        const connection = await pool.getConnection();
+        console.log('Kết nối MySQL thành công!');
+        connection.release();
+    } catch (error) {
+        console.error('Lỗi kết nối MySQL:', error.message);
+    }
+}
+
+module.exports = { pool, checkConnection };
