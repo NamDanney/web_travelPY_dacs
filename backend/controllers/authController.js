@@ -5,17 +5,16 @@ const jwtConfig = require('../config/jwt');
 
 exports.register = async (req, res) => {
   try {
-    // Kiểm tra dữ liệu đầu vào
-    const { username, email, password, role } = req.body;
+    const { username, fullName, email, phone, password } = req.body;
     
     if (!username || !email || !password) {
       return res.status(400).json({ 
         success: false, 
-        message: 'Vui lòng cung cấp đầy đủ thông tin (username, email, password)' 
+        message: 'Vui lòng cung cấp đầy đủ thông tin bắt buộc' 
       });
     }
 
-    // Kiểm tra tài khoản đã tồn tại chưa
+    // Kiểm tra tài khoản đã tồn tại
     const existingEmail = await User.findByEmail(email);
     if (existingEmail) {
       return res.status(400).json({ 
@@ -24,34 +23,20 @@ exports.register = async (req, res) => {
       });
     }
 
-    const existingUsername = await User.findByUsername(username);
-    if (existingUsername) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Username đã được sử dụng'
-      });
-    }
-
-    // Tạo người dùng mới
     const user = new User({
       username,
+      fullName,
       email,
-      password,
-      role: role && req.user && req.user.role === 'admin' ? role : 'user' // Chỉ admin mới có thể tạo tài khoản admin
+      phone,
+      password
     });
 
-    // Lưu vào cơ sở dữ liệu
     const newUser = await user.register();
 
     res.status(201).json({
       success: true,
       message: 'Đăng ký thành công',
-      data: {
-        id: newUser.id,
-        username: newUser.username,
-        email: newUser.email,
-        role: newUser.role
-      }
+      data: newUser
     });
   } catch (error) {
     console.error('Registration error:', error);
@@ -67,7 +52,6 @@ exports.login = async (req, res) => {
   try {
     const { username, password } = req.body;
 
-    // Kiểm tra dữ liệu đầu vào
     if (!username || !password) {
       return res.status(400).json({ 
         success: false, 
@@ -75,7 +59,6 @@ exports.login = async (req, res) => {
       });
     }
 
-    // Kiểm tra người dùng tồn tại
     const user = await User.findByUsername(username);
     if (!user) {
       return res.status(401).json({ 
@@ -84,7 +67,6 @@ exports.login = async (req, res) => {
       });
     }
 
-    // Kiểm tra mật khẩu
     const isPasswordValid = await bcrypt.compare(password, user.password_hash);
     if (!isPasswordValid) {
       return res.status(401).json({ 
@@ -93,11 +75,16 @@ exports.login = async (req, res) => {
       });
     }
 
-    // Tạo JWT token
+    // Tạo JWT token với expiresIn từ config
     const token = jwt.sign(
-      { id: user.id, role: user.role },
+      { 
+        id: user.id, 
+        role: user.role 
+      },
       jwtConfig.secret,
-      { expiresIn: jwtConfig.expiresIn }
+      { 
+        expiresIn: jwtConfig.expiresIn 
+      }
     );
 
     res.status(200).json({
@@ -107,10 +94,13 @@ exports.login = async (req, res) => {
         id: user.id,
         username: user.username,
         email: user.email,
+        fullName: user.full_name, 
+        phone: user.phone,        
         role: user.role
       },
       token
     });
+
   } catch (error) {
     console.error('Login error:', error);
     res.status(500).json({ 

@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import '../../styles/auth/AuthForm.css';
 
 const RegisterForm = () => {
+    const navigate = useNavigate();
     const [formData, setFormData] = useState({
+        username: '',
         fullName: '',
         email: '',
         phone: '',
@@ -12,9 +15,63 @@ const RegisterForm = () => {
         agreeTerms: false
     });
 
-    const handleSubmit = (e) => {
+    const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false);
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
+
+    const validateForm = () => {
+        if (!formData.username) {
+            setError('Vui lòng nhập tên đăng nhập');
+            return false;
+        }
+        if (!formData.email) {
+            setError('Vui lòng nhập email');
+            return false;
+        }
+        if (!formData.password) {
+            setError('Vui lòng nhập mật khẩu');
+            return false;
+        }
+        if (formData.password !== formData.confirmPassword) {
+            setError('Mật khẩu xác nhận không khớp');
+            return false;
+        }
+        if (!formData.agreeTerms) {
+            setError('Vui lòng đồng ý với điều khoản và điều kiện');
+            return false;
+        }
+        return true;
+    };
+
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        console.log('Register data:', formData);
+        setError('');
+
+        if (!validateForm()) return;
+
+        try {
+            setLoading(true);
+            const response = await axios.post('http://localhost:5000/api/auth/register', {
+                username: formData.username,
+                fullName: formData.fullName,
+                email: formData.email,
+                phone: formData.phone,
+                password: formData.password
+            });
+
+            if (response.data.success) {
+                setShowSuccessModal(true);
+            }
+        } catch (error) {
+            setError(error.response?.data?.message || 'Có lỗi xảy ra khi đăng ký');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleSuccessModalClose = () => {
+        setShowSuccessModal(false);
+        navigate('/login');
     };
 
     return (
@@ -39,6 +96,23 @@ const RegisterForm = () => {
                     </div>
 
                     <form onSubmit={handleSubmit} className="auth-form">
+                        {error && <div className="alert alert-danger">{error}</div>}
+                        
+                        <div className="form-group">
+                            <label htmlFor="username">Tên đăng nhập</label>
+                            <div className="input-group">
+                                <i className="bi bi-person"></i>
+                                <input
+                                    type="text"
+                                    id="username"
+                                    placeholder="Nhập tên đăng nhập"
+                                    value={formData.username}
+                                    onChange={(e) => setFormData({...formData, username: e.target.value})}
+                                    required
+                                />
+                            </div>
+                        </div>
+
                         <div className="form-group">
                             <label htmlFor="fullName">Họ và tên</label>
                             <div className="input-group">
@@ -131,9 +205,9 @@ const RegisterForm = () => {
                             </label>
                         </div>
 
-                        <button type="submit" className="btn-submit">
-                            Đăng ký
-                            <i className="bi bi-arrow-right"></i>
+                        <button type="submit" className="btn-submit" disabled={loading}>
+                            {loading ? 'Đang xử lý...' : 'Đăng ký'}
+                            {!loading && <i className="bi bi-arrow-right"></i>}
                         </button>
                     </form>
 
@@ -158,6 +232,21 @@ const RegisterForm = () => {
                     </p>
                 </div>
             </div>
+
+            {showSuccessModal && (
+                <div className="modal-overlay">
+                    <div className="success-modal">
+                        <div className="success-icon">
+                            <i className="bi bi-check-circle-fill"></i>
+                        </div>
+                        <h3>Đăng ký thành công!</h3>
+                        <p>Tài khoản của bạn đã được tạo thành công.</p>
+                        <button className="btn-modal" onClick={handleSuccessModalClose}>
+                            OK
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

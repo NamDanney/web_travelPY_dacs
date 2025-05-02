@@ -1,17 +1,61 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import axios from 'axios';
 import '../../styles/auth/AuthForm.css';
+import { useAuth } from '../../contexts/AuthContext';
 
 const LoginForm = () => {
+    const navigate = useNavigate();
+    const location = useLocation();
+    const from = location.state?.from || '/';
+    const { login } = useAuth();
     const [formData, setFormData] = useState({
-        email: '',
+        username: '',
         password: '',
         remember: false
     });
 
-    const handleSubmit = (e) => {
+    const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false);
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
+
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        console.log('Login data:', formData);
+        setError('');
+
+        if (!formData.username || !formData.password) {
+            setError('Vui lòng nhập đầy đủ thông tin');
+            return;
+        }
+
+        try {
+            setLoading(true);
+            const response = await axios.post('http://localhost:5000/api/auth/login', {
+                username: formData.username,
+                password: formData.password
+            });
+
+            if (response.data.success) {
+                if (formData.remember) {
+                    localStorage.setItem('token', response.data.token);
+                } else {
+                    sessionStorage.setItem('token', response.data.token);
+                }
+                
+                login(response.data.data);
+                
+                setShowSuccessModal(true);
+            }
+        } catch (error) {
+            setError(error.response?.data?.message || 'Đăng nhập thất bại');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleSuccessModalClose = () => {
+        setShowSuccessModal(false);
+        navigate(from); 
     };
 
     return (
@@ -23,7 +67,7 @@ const LoginForm = () => {
                     <div className="auth-image"></div>
                 </div>
             </div>
-            
+
             <div className="auth-main">
                 <div className="auth-box">
                     <div className="auth-header">
@@ -35,17 +79,25 @@ const LoginForm = () => {
                         <p>Vui lòng đăng nhập để tiếp tục</p>
                     </div>
 
+                    {location.state?.message && (
+                        <div className="alert alert-success">
+                            {location.state.message}
+                        </div>
+                    )}
+
                     <form onSubmit={handleSubmit} className="auth-form">
+                        {error && <div className="alert alert-danger">{error}</div>}
+
                         <div className="form-group">
-                            <label htmlFor="email">Email hoặc số điện thoại</label>
+                            <label htmlFor="username">Tên đăng nhập</label>
                             <div className="input-group">
-                                <i className="bi bi-envelope"></i>
+                                <i className="bi bi-person"></i>
                                 <input
                                     type="text"
-                                    id="email"
-                                    placeholder="Nhập email hoặc số điện thoại"
-                                    value={formData.email}
-                                    onChange={(e) => setFormData({...formData, email: e.target.value})}
+                                    id="username"
+                                    placeholder="Nhập tên đăng nhập"
+                                    value={formData.username}
+                                    onChange={(e) => setFormData({...formData, username: e.target.value})}
                                     required
                                 />
                             </div>
@@ -80,9 +132,9 @@ const LoginForm = () => {
                             </Link>
                         </div>
 
-                        <button type="submit" className="btn-submit">
-                            Đăng nhập
-                            <i className="bi bi-arrow-right"></i>
+                        <button type="submit" className="btn-submit" disabled={loading}>
+                            {loading ? 'Đang xử lý...' : 'Đăng nhập'}
+                            {!loading && <i className="bi bi-arrow-right"></i>}
                         </button>
                     </form>
 
@@ -92,7 +144,7 @@ const LoginForm = () => {
 
                     <div className="social-auth">
                         <button type="button" className="social-btn google">
-                        <i className="bi bi-google"></i>
+                            <i className="bi bi-google"></i>
                             <span>Google</span>
                         </button>
                         <button type="button" className="social-btn facebook">
@@ -107,6 +159,21 @@ const LoginForm = () => {
                     </p>
                 </div>
             </div>
+
+            {showSuccessModal && (
+                <div className="modal-overlay">
+                    <div className="success-modal">
+                        <div className="success-icon">
+                            <i className="bi bi-check-circle-fill"></i>
+                        </div>
+                        <h3>Đăng nhập thành công!</h3>
+                        <p>Chào mừng bạn đã trở lại.</p>
+                        <button className="btn-modal" onClick={handleSuccessModalClose}>
+                            OK
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

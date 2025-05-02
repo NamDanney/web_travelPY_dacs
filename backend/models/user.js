@@ -1,47 +1,38 @@
 const mysql = require('mysql2/promise');
 const bcrypt = require('bcryptjs');
-const dbConfig = require('../config/db');
-
-// Tạo pool connection
-const pool = mysql.createPool(dbConfig);
+const { pool } = require('../config/db');
 
 class User {
   constructor(user) {
     this.username = user.username;
+    this.fullName = user.fullName;
     this.email = user.email;
+    this.phone = user.phone;
     this.password = user.password;
     this.role = user.role || 'user';
   }
 
-  static async getPool() {
-    return pool;
-  }
-
-  // Đăng ký người dùng mới
   async register() {
+    const connection = await pool.getConnection();
     try {
-      // Mã hóa mật khẩu
       const salt = await bcrypt.genSalt(10);
       const hashedPassword = await bcrypt.hash(this.password, salt);
 
-      const connection = await pool.getConnection();
-      try {
-        const [result] = await connection.execute(
-          'INSERT INTO Users (username, email, password_hash, role) VALUES (?, ?, ?, ?)',
-          [this.username, this.email, hashedPassword, this.role]
-        );
-        
-        return {
-          id: result.insertId,
-          username: this.username,
-          email: this.email,
-          role: this.role
-        };
-      } finally {
-        connection.release();
-      }
-    } catch (error) {
-      throw error;
+      const [result] = await connection.execute(
+        'INSERT INTO Users (username, full_name, email, phone, password_hash, role) VALUES (?, ?, ?, ?, ?, ?)',
+        [this.username, this.fullName, this.email, this.phone, hashedPassword, this.role]
+      );
+
+      return {
+        id: result.insertId,
+        username: this.username,
+        fullName: this.fullName,
+        email: this.email,
+        phone: this.phone,
+        role: this.role
+      };
+    } finally {
+      connection.release();
     }
   }
 
@@ -54,7 +45,7 @@ class User {
           'SELECT * FROM Users WHERE email = ?',
           [email]
         );
-        
+
         return rows.length ? rows[0] : null;
       } finally {
         connection.release();
@@ -70,10 +61,9 @@ class User {
       const connection = await pool.getConnection();
       try {
         const [rows] = await connection.execute(
-          'SELECT * FROM Users WHERE username = ?',
+          'SELECT id, username, full_name, email, phone, role, password_hash FROM Users WHERE username = ?',
           [username]
         );
-        
         return rows.length ? rows[0] : null;
       } finally {
         connection.release();
@@ -89,10 +79,10 @@ class User {
       const connection = await pool.getConnection();
       try {
         const [rows] = await connection.execute(
-          'SELECT id, username, email, role, created_at FROM Users WHERE id = ?',
+          'SELECT id, username, full_name, email, phone, role, created_at FROM Users WHERE id = ?',
           [id]
         );
-        
+
         return rows.length ? rows[0] : null;
       } finally {
         connection.release();
@@ -108,9 +98,9 @@ class User {
       const connection = await pool.getConnection();
       try {
         const [rows] = await connection.execute(
-          'SELECT id, username, email, role, created_at FROM Users'
+          'SELECT id, username, full_name, email, phone, role, created_at FROM Users'
         );
-        
+
         return rows;
       } finally {
         connection.release();
@@ -134,9 +124,19 @@ class User {
           values.push(userData.username);
         }
 
+        if (userData.fullName) {
+          fieldsToUpdate.push('full_name = ?');
+          values.push(userData.fullName);
+        }
+
         if (userData.email) {
           fieldsToUpdate.push('email = ?');
           values.push(userData.email);
+        }
+
+        if (userData.phone) {
+          fieldsToUpdate.push('phone = ?');
+          values.push(userData.phone);
         }
 
         if (userData.password) {
@@ -156,7 +156,7 @@ class User {
 
         const query = `UPDATE Users SET ${fieldsToUpdate.join(', ')} WHERE id = ?`;
         const [result] = await connection.execute(query, values);
-        
+
         return result.affectedRows > 0;
       } finally {
         connection.release();
@@ -175,7 +175,7 @@ class User {
           'DELETE FROM Users WHERE id = ?',
           [id]
         );
-        
+
         return result.affectedRows > 0;
       } finally {
         connection.release();

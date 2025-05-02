@@ -1,29 +1,36 @@
 const mysql = require('mysql2/promise');
-require('dotenv').config();
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '../.env') });
 
-// Cấu hình kết nối MySQL
 const dbConfig = {
     host: process.env.DB_HOST,
     user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
     database: process.env.DB_NAME,
-    port: process.env.DB_PORT,
+    port: parseInt(process.env.DB_PORT),
     waitForConnections: true,
     connectionLimit: 10,
     queueLimit: 0
 };
 
-// Tạo pool kết nối
+console.log('Database Config:', {
+    host: dbConfig.host,
+    user: dbConfig.user,
+    database: dbConfig.database,
+    port: dbConfig.port
+});
+
 const pool = mysql.createPool(dbConfig);
 
-// Kiểm tra kết nối
 async function checkConnection() {
     try {
         const connection = await pool.getConnection();
-        console.log('Kết nối MySQL thành công!');
+        console.log('MySQL Connection Successful!');
         connection.release();
+        return true;
     } catch (error) {
-        console.error('Lỗi kết nối MySQL:', error.message);
+        console.error('MySQL Connection Error:', error);
+        return false;
     }
 }
 
