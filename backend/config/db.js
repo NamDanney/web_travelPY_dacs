@@ -1,26 +1,37 @@
-// filepath: d:\WEB_TRAVEL\my-app\backend\config\db.js
-const { Sequelize } = require('sequelize');
-const dotenv = require('dotenv');
+const mysql = require('mysql2/promise');
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '../.env') });
 
-// Load environment variables from .env file
-dotenv.config();
-
-// Create a Sequelize instance
-const sequelize = new Sequelize(process.env.DB_NAME, process.env.DB_USER, process.env.DB_PASSWORD, {
+const dbConfig = {
     host: process.env.DB_HOST,
-    port: 3306, // Thay đổi cổng nếu cần
-    dialect: 'mysql',
-    logging: false, // Disable logging for cleaner output
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME,
+    port: parseInt(process.env.DB_PORT),
+    waitForConnections: true,
+    connectionLimit: 10,
+    queueLimit: 0
+};
+
+console.log('Database Config:', {
+    host: dbConfig.host,
+    user: dbConfig.user,
+    database: dbConfig.database,
+    port: dbConfig.port
 });
 
-// Test the connection
-sequelize
-    .authenticate()
-    .then(() => {
-        console.log('Connection to the database has been established successfully.');
-    })
-    .catch((error) => {
-        console.error('Unable to connect to the database:', error);
-    });
+const pool = mysql.createPool(dbConfig);
 
-module.exports = sequelize;
+async function checkConnection() {
+    try {
+        const connection = await pool.getConnection();
+        console.log('MySQL Connection Successful!');
+        connection.release();
+        return true;
+    } catch (error) {
+        console.error('MySQL Connection Error:', error);
+        return false;
+    }
+}
+
+module.exports = { pool, checkConnection };

@@ -1,20 +1,119 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import '../../styles/auth/AuthForm.css';
 
 const RegisterForm = () => {
+    const navigate = useNavigate();
     const [formData, setFormData] = useState({
+        username: '',
         fullName: '',
         email: '',
         phone: '',
         password: '',
         confirmPassword: '',
-        agreeTerms: false
+        agreeTerms: false,
+        otp: '',
     });
 
-    const handleSubmit = (e) => {
+    const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false);
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const [countdown, setCountdown] = useState(0);
+    const [sendingOTP, setSendingOTP] = useState(false);
+    const [showPasswords, setShowPasswords] = useState({
+        password: false,
+        confirm: false
+    });
+
+    const validateForm = () => {
+        if (!formData.username) {
+            setError('Vui lòng nhập tên đăng nhập');
+            return false;
+        }
+        if (!formData.email) {
+            setError('Vui lòng nhập email');
+            return false;
+        }
+        if (!formData.password) {
+            setError('Vui lòng nhập mật khẩu');
+            return false;
+        }
+        if (formData.password !== formData.confirmPassword) {
+            setError('Mật khẩu xác nhận không khớp');
+            return false;
+        }
+        if (!formData.agreeTerms) {
+            setError('Vui lòng đồng ý với điều khoản và điều kiện');
+            return false;
+        }
+        return true;
+    };
+
+    const startCountdown = () => {
+        setCountdown(60);
+        const timer = setInterval(() => {
+            setCountdown(prev => {
+                if (prev <= 1) {
+                    clearInterval(timer);
+                    return 0;
+                }
+                return prev - 1;
+            });
+        }, 1000);
+    };
+
+    const handleSendOTP = async () => {
+        try {
+            if (!formData.email) {
+                setError('Vui lòng nhập email');
+                return;
+            }
+
+            setSendingOTP(true); // Set loading state
+            startCountdown(); // Start countdown immediately
+
+            const response = await axios.post('http://localhost:5000/api/auth/send-otp', {
+                email: formData.email
+            });
+
+            if (response.data.success) {
+                setError('');
+            }
+        } catch (error) {
+            setError(error.response?.data?.message || 'Không thể gửi mã OTP');
+            setCountdown(0); // Reset countdown if error
+        } finally {
+            setSendingOTP(false);
+        }
+    };
+
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        console.log('Register data:', formData);
+        setError('');
+
+        if (!validateForm()) return;
+
+        try {
+            setLoading(true);
+            const response = await axios.post('http://localhost:5000/api/auth/register', {
+                ...formData,
+                otp: formData.otp
+            });
+
+            if (response.data.success) {
+                setShowSuccessModal(true);
+            }
+        } catch (error) {
+            setError(error.response?.data?.message || 'Có lỗi xảy ra khi đăng ký');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleSuccessModalClose = () => {
+        setShowSuccessModal(false);
+        navigate('/login');
     };
 
     return (
@@ -39,6 +138,23 @@ const RegisterForm = () => {
                     </div>
 
                     <form onSubmit={handleSubmit} className="auth-form">
+                        {error && <div className="alert alert-danger">{error}</div>}
+                        
+                        <div className="form-group">
+                            <label htmlFor="username">Tên đăng nhập</label>
+                            <div className="input-group">
+                                <i className="bi bi-person"></i>
+                                <input
+                                    type="text"
+                                    id="username"
+                                    placeholder="Nhập tên đăng nhập"
+                                    value={formData.username}
+                                    onChange={(e) => setFormData({...formData, username: e.target.value})}
+                                    required
+                                />
+                            </div>
+                        </div>
+
                         <div className="form-group">
                             <label htmlFor="fullName">Họ và tên</label>
                             <div className="input-group">
@@ -67,6 +183,20 @@ const RegisterForm = () => {
                                         onChange={(e) => setFormData({...formData, email: e.target.value})}
                                         required
                                     />
+                                    <button
+                                        type="button"
+                                        className={`btn-send-otp ${sendingOTP ? 'loading' : ''}`}
+                                        onClick={handleSendOTP}
+                                        disabled={countdown > 0 || sendingOTP}
+                                    >
+                                        {sendingOTP ? (
+                                            <i className="bi bi-hourglass-split spinning"></i>
+                                        ) : countdown > 0 ? (
+                                            `${countdown}s`
+                                        ) : (
+                                            'Gửi mã'
+                                        )}
+                                    </button>
                                 </div>
                             </div>
 
@@ -87,17 +217,39 @@ const RegisterForm = () => {
                         </div>
 
                         <div className="form-group">
+                            <label htmlFor="otp">Mã xác thực</label>
+                            <div className="input-group">
+                                <i className="bi bi-shield-lock"></i>
+                                <input
+                                    type="text"
+                                    id="otp"
+                                    placeholder="Nhập mã OTP Email"
+                                    value={formData.otp}
+                                    onChange={(e) => setFormData({...formData, otp: e.target.value})}
+                                    required
+                                />
+                            </div>
+                        </div>
+
+                        <div className="form-group">
                             <label htmlFor="password">Mật khẩu</label>
                             <div className="input-group">
                                 <i className="bi bi-lock"></i>
                                 <input
-                                    type="password"
+                                    type={showPasswords.password ? "text" : "password"}
                                     id="password"
                                     placeholder="Tạo mật khẩu"
                                     value={formData.password}
                                     onChange={(e) => setFormData({...formData, password: e.target.value})}
                                     required
                                 />
+                                <button
+                                    type="button"
+                                    className="btn-toggle-password"
+                                    onClick={() => setShowPasswords({...showPasswords, password: !showPasswords.password})}
+                                >
+                                    <i className={`bi bi-eye${showPasswords.password ? '-slash' : ''}`}></i>
+                                </button>
                             </div>
                         </div>
 
@@ -106,13 +258,20 @@ const RegisterForm = () => {
                             <div className="input-group">
                                 <i className="bi bi-lock-fill"></i>
                                 <input
-                                    type="password"
+                                    type={showPasswords.confirm ? "text" : "password"}
                                     id="confirmPassword"
                                     placeholder="Nhập lại mật khẩu"
                                     value={formData.confirmPassword}
                                     onChange={(e) => setFormData({...formData, confirmPassword: e.target.value})}
                                     required
                                 />
+                                <button
+                                    type="button"
+                                    className="btn-toggle-password"
+                                    onClick={() => setShowPasswords({...showPasswords, confirm: !showPasswords.confirm})}
+                                >
+                                    <i className={`bi bi-eye${showPasswords.confirm ? '-slash' : ''}`}></i>
+                                </button>
                             </div>
                         </div>
 
@@ -131,9 +290,9 @@ const RegisterForm = () => {
                             </label>
                         </div>
 
-                        <button type="submit" className="btn-submit">
-                            Đăng ký
-                            <i className="bi bi-arrow-right"></i>
+                        <button type="submit" className="btn-submit" disabled={loading}>
+                            {loading ? 'Đang xử lý...' : 'Đăng ký'}
+                            {!loading && <i className="bi bi-arrow-right"></i>}
                         </button>
                     </form>
 
@@ -158,6 +317,21 @@ const RegisterForm = () => {
                     </p>
                 </div>
             </div>
+
+            {showSuccessModal && (
+                <div className="modal-overlay">
+                    <div className="success-modal">
+                        <div className="success-icon">
+                            <i className="bi bi-check-circle-fill"></i>
+                        </div>
+                        <h3>Đăng ký thành công!</h3>
+                        <p>Tài khoản của bạn đã được tạo thành công.</p>
+                        <button className="btn-modal" onClick={handleSuccessModalClose}>
+                            OK
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
