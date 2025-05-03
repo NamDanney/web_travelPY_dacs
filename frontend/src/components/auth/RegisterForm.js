@@ -12,12 +12,19 @@ const RegisterForm = () => {
         phone: '',
         password: '',
         confirmPassword: '',
-        agreeTerms: false
+        agreeTerms: false,
+        otp: '',
     });
 
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const [countdown, setCountdown] = useState(0);
+    const [sendingOTP, setSendingOTP] = useState(false);
+    const [showPasswords, setShowPasswords] = useState({
+        password: false,
+        confirm: false
+    });
 
     const validateForm = () => {
         if (!formData.username) {
@@ -43,6 +50,44 @@ const RegisterForm = () => {
         return true;
     };
 
+    const startCountdown = () => {
+        setCountdown(60);
+        const timer = setInterval(() => {
+            setCountdown(prev => {
+                if (prev <= 1) {
+                    clearInterval(timer);
+                    return 0;
+                }
+                return prev - 1;
+            });
+        }, 1000);
+    };
+
+    const handleSendOTP = async () => {
+        try {
+            if (!formData.email) {
+                setError('Vui lòng nhập email');
+                return;
+            }
+
+            setSendingOTP(true); // Set loading state
+            startCountdown(); // Start countdown immediately
+
+            const response = await axios.post('http://localhost:5000/api/auth/send-otp', {
+                email: formData.email
+            });
+
+            if (response.data.success) {
+                setError('');
+            }
+        } catch (error) {
+            setError(error.response?.data?.message || 'Không thể gửi mã OTP');
+            setCountdown(0); // Reset countdown if error
+        } finally {
+            setSendingOTP(false);
+        }
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
@@ -52,11 +97,8 @@ const RegisterForm = () => {
         try {
             setLoading(true);
             const response = await axios.post('http://localhost:5000/api/auth/register', {
-                username: formData.username,
-                fullName: formData.fullName,
-                email: formData.email,
-                phone: formData.phone,
-                password: formData.password
+                ...formData,
+                otp: formData.otp
             });
 
             if (response.data.success) {
@@ -141,6 +183,20 @@ const RegisterForm = () => {
                                         onChange={(e) => setFormData({...formData, email: e.target.value})}
                                         required
                                     />
+                                    <button
+                                        type="button"
+                                        className={`btn-send-otp ${sendingOTP ? 'loading' : ''}`}
+                                        onClick={handleSendOTP}
+                                        disabled={countdown > 0 || sendingOTP}
+                                    >
+                                        {sendingOTP ? (
+                                            <i className="bi bi-hourglass-split spinning"></i>
+                                        ) : countdown > 0 ? (
+                                            `${countdown}s`
+                                        ) : (
+                                            'Gửi mã'
+                                        )}
+                                    </button>
                                 </div>
                             </div>
 
@@ -161,17 +217,39 @@ const RegisterForm = () => {
                         </div>
 
                         <div className="form-group">
+                            <label htmlFor="otp">Mã xác thực</label>
+                            <div className="input-group">
+                                <i className="bi bi-shield-lock"></i>
+                                <input
+                                    type="text"
+                                    id="otp"
+                                    placeholder="Nhập mã OTP Email"
+                                    value={formData.otp}
+                                    onChange={(e) => setFormData({...formData, otp: e.target.value})}
+                                    required
+                                />
+                            </div>
+                        </div>
+
+                        <div className="form-group">
                             <label htmlFor="password">Mật khẩu</label>
                             <div className="input-group">
                                 <i className="bi bi-lock"></i>
                                 <input
-                                    type="password"
+                                    type={showPasswords.password ? "text" : "password"}
                                     id="password"
                                     placeholder="Tạo mật khẩu"
                                     value={formData.password}
                                     onChange={(e) => setFormData({...formData, password: e.target.value})}
                                     required
                                 />
+                                <button
+                                    type="button"
+                                    className="btn-toggle-password"
+                                    onClick={() => setShowPasswords({...showPasswords, password: !showPasswords.password})}
+                                >
+                                    <i className={`bi bi-eye${showPasswords.password ? '-slash' : ''}`}></i>
+                                </button>
                             </div>
                         </div>
 
@@ -180,13 +258,20 @@ const RegisterForm = () => {
                             <div className="input-group">
                                 <i className="bi bi-lock-fill"></i>
                                 <input
-                                    type="password"
+                                    type={showPasswords.confirm ? "text" : "password"}
                                     id="confirmPassword"
                                     placeholder="Nhập lại mật khẩu"
                                     value={formData.confirmPassword}
                                     onChange={(e) => setFormData({...formData, confirmPassword: e.target.value})}
                                     required
                                 />
+                                <button
+                                    type="button"
+                                    className="btn-toggle-password"
+                                    onClick={() => setShowPasswords({...showPasswords, confirm: !showPasswords.confirm})}
+                                >
+                                    <i className={`bi bi-eye${showPasswords.confirm ? '-slash' : ''}`}></i>
+                                </button>
                             </div>
                         </div>
 

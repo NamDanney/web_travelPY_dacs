@@ -108,12 +108,20 @@ const Header = () => {
                             {isAuthenticated ? (
                                 <div className="dropdown user-menu">
                                     <button 
-                                        className="user-menu-btn dropdown-toggle" 
+                                        className={`user-menu-btn dropdown-toggle ${user.role === 'admin' ? 'admin-role' : ''}`}
                                         type="button" 
                                         data-bs-toggle="dropdown"
                                     >
                                         <i className="bi bi-person-circle"></i>
-                                        <span>{user.username}</span>
+                                        <span>
+                                            {user.username}
+                                            {user.role === 'admin' && (
+                                                <span className="admin-badge">
+                                                    <i className="bi bi-shield-fill"></i>
+                                                    Admin
+                                                </span>
+                                            )}
+                                        </span>
                                     </button>
                                     <ul className="dropdown-menu">
                                         <li>
@@ -122,6 +130,14 @@ const Header = () => {
                                                 Tài khoản
                                             </Link>
                                         </li>
+                                        {user.role === 'admin' && (
+                                            <li>
+                                                <Link to="/admin" className="dropdown-item text-primary">
+                                                    <i className="bi bi-shield-lock"></i>
+                                                    Quản lý Admin
+                                                </Link>
+                                            </li>
+                                        )}
                                         <li><hr className="dropdown-divider"/></li>
                                         <li>
                                             <button onClick={handleLogout} className="dropdown-item text-danger">

@@ -79,7 +79,7 @@ class User {
       const connection = await pool.getConnection();
       try {
         const [rows] = await connection.execute(
-          'SELECT id, username, full_name, email, phone, role, created_at FROM Users WHERE id = ?',
+          'SELECT id, username, full_name, email, phone, role, password_hash, created_at FROM Users WHERE id = ?', // Thêm password_hash
           [id]
         );
 
@@ -115,7 +115,6 @@ class User {
     try {
       const connection = await pool.getConnection();
       try {
-        // Tạo câu query động dựa trên dữ liệu cần cập nhật
         const fieldsToUpdate = [];
         const values = [];
 
@@ -151,9 +150,7 @@ class User {
           values.push(userData.role);
         }
 
-        // Thêm ID vào cuối mảng values
         values.push(id);
-
         const query = `UPDATE Users SET ${fieldsToUpdate.join(', ')} WHERE id = ?`;
         const [result] = await connection.execute(query, values);
 
@@ -182,6 +179,49 @@ class User {
       }
     } catch (error) {
       throw error;
+    }
+  }
+
+  // Thêm các phương thức mới
+  static async saveOTP(email, otp) {
+    const connection = await pool.getConnection();
+    try {
+        // Xóa OTP cũ
+        await connection.execute(
+            'DELETE FROM user_otps WHERE email = ?',
+            [email]
+        );
+
+
+        await connection.execute(
+            'INSERT INTO user_otps (email, otp, expires_at) VALUES (?, ?, DATE_ADD(NOW(), INTERVAL 5 MINUTE))',
+            [email, otp]
+        );
+        return true;
+    } finally {
+        connection.release();
+    }
+  }
+
+  static async verifyOTP(email, otp) {
+    const connection = await pool.getConnection();
+    try {
+        // Kiểm tra OTP còn hạn và chưa được sử dụng
+        const [rows] = await connection.execute(
+            `SELECT * FROM user_otps 
+             WHERE email = ? 
+             AND otp = ? 
+             AND expires_at > NOW()`,  // Bỏ điều kiện used = 0
+            [email, otp]
+        );
+
+        if (rows.length > 0) {
+
+            return true;
+        }
+        return false;
+    } finally {
+        connection.release();
     }
   }
 }

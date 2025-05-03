@@ -1,3 +1,4 @@
+const bcrypt = require('bcryptjs');
 const User = require('../models/user');
 
 // Lấy danh sách tất cả người dùng (chỉ admin)
@@ -150,6 +151,110 @@ exports.deleteUser = async (req, res) => {
     res.status(500).json({ 
       success: false, 
       message: 'Đã xảy ra lỗi khi xóa người dùng',
+      error: error.message
+    });
+  }
+};
+
+// Controller đổi mật khẩu
+exports.changePassword = async (req, res) => {
+  try {
+    const userId = req.params.id;
+    const { currentPassword, newPassword } = req.body;
+
+    // Validate input
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({
+        success: false,
+        message: 'Vui lòng cung cấp đầy đủ thông tin'
+      });
+    }
+
+    // Kiểm tra quyền
+    if (req.user.id !== parseInt(userId)) {
+      return res.status(403).json({
+        success: false,
+        message: 'Bạn không có quyền thay đổi mật khẩu này'
+      });
+    }
+
+    // Kiểm tra user tồn tại
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'Không tìm thấy người dùng'
+      });
+    }
+
+    // Xác thực mật khẩu hiện tại
+    const isValidPassword = await bcrypt.compare(currentPassword, user.password_hash);
+    if (!isValidPassword) {
+      return res.status(400).json({
+        success: false,
+        message: 'Mật khẩu hiện tại không đúng'
+      });
+    }
+
+    // Hash mật khẩu mới và cập nhật
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+    
+    // Cập nhật mật khẩu mới
+    const updated = await User.updateUser(userId, { password: newPassword });
+
+    if (updated) {
+      res.status(200).json({
+        success: true,
+        message: 'Đổi mật khẩu thành công'
+      });
+    } else {
+      res.status(400).json({
+        success: false,
+        message: 'Không thể đổi mật khẩu'
+      });
+    }
+  } catch (error) {
+    console.error('Change password error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Đã xảy ra lỗi khi đổi mật khẩu',
+      error: error.message
+    });
+  }
+};
+
+// Cập nhật role của người dùng
+exports.updateUserRole = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { role } = req.body;
+
+    if (!['user', 'admin'].includes(role)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Role không hợp lệ'
+      });
+    }
+
+    const updated = await User.updateUser(id, { role });
+
+    if (updated) {
+      res.status(200).json({
+        success: true,
+        message: 'Cập nhật role thành công'
+      });
+    } else {
+      res.status(400).json({
+        success: false,
+        message: 'Cập nhật role thất bại'
+      });
+    }
+  } catch (error) {
+    console.error('Update role error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Đã xảy ra lỗi khi cập nhật role',
       error: error.message
     });
   }

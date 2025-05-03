@@ -195,6 +195,57 @@
     box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
   }
   
+  /* Style cho user menu button khi là admin */
+  .user-menu-btn.admin-role {
+    background: var(--primary); /* Sử dụng màu chủ đạo */
+    border: none;
+    color: #fff;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .user-menu-btn.admin-role:hover {
+    background: var(--primary-dark);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+  }
+  
+  /* Style cho badge admin */
+  .admin-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(255, 255, 255, 0.15);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: #fff;
+    margin-left: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+  
+  .admin-badge i {
+    font-size: 0.7rem;
+  }
+  
+  /* Style cho dropdown menu item admin */
+  .dropdown-menu .dropdown-item.text-primary {
+    color: var(--primary) !important;
+    background: transparent;
+    transition: all 0.2s ease;
+  }
+  
+  .dropdown-menu .dropdown-item.text-primary:hover {
+    background: rgba(37, 99, 235, 0.08);
+    transform: none;
+  }
+  
+  .dropdown-menu .dropdown-item.text-primary i {
+    color: var(--primary);
+    margin-right: 8px;
+  }
+  
   .dropdown-menu {
     position: absolute;
     top: calc(100% + 8px);
@@ -446,5 +497,24 @@
     to {
       transform: translateX(0);
       opacity: 1;
+    }
+  }
+  
+  /* Animation cho admin badge */
+  @keyframes glowing {
+    0% { box-shadow: 0 0 5px rgba(59, 130, 246, 0.5); }
+    50% { box-shadow: 0 0 20px rgba(59, 130, 246, 0.8); }
+    100% { box-shadow: 0 0 5px rgba(59, 130, 246, 0.5); }
+  }
+  
+  /* Responsive styles */
+  @media (max-width: 768px) {
+    .user-menu-btn.admin-role {
+        padding: 8px 12px;
+    }
+    
+    .admin-badge {
+        padding: 2px 6px;
+        font-size: 0.7rem;
     }
   }

@@ -4,7 +4,6 @@ const authMiddleware = require('../middlewares/autMiddleware');
 
 const router = express.Router();
 
-
 // Apply auth middleware cho tất cả các routes
 router.use(authMiddleware.verifyToken);
 
@@ -16,6 +15,9 @@ router.get('/:id', userController.getUserById);
 
 // Cập nhật thông tin người dùng
 router.put('/:id', userController.updateUser);
+
+// Thêm route đổi mật khẩu
+router.put('/:id/change-password', userController.changePassword);
 
 // Xóa người dùng (chỉ admin)
 router.delete('/:id', authMiddleware.isAdmin, userController.deleteUser);

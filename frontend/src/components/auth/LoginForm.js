@@ -18,6 +18,7 @@ const LoginForm = () => {
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -108,13 +109,20 @@ const LoginForm = () => {
                             <div className="input-group">
                                 <i className="bi bi-lock"></i>
                                 <input
-                                    type="password"
+                                    type={showPassword ? "text" : "password"}
                                     id="password"
                                     placeholder="Nhập mật khẩu"
                                     value={formData.password}
                                     onChange={(e) => setFormData({...formData, password: e.target.value})}
                                     required
                                 />
+                                <button
+                                    type="button"
+                                    className="btn-toggle-password"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                >
+                                    <i className={`bi bi-eye${showPassword ? '-slash' : ''}`}></i>
+                                </button>
                             </div>
                         </div>
 

@@ -40,10 +40,65 @@
     gap: 1.5rem;
 }
 
+/* Profile Form Groups */
 .profile-form-group {
+    position: relative;
+    margin-bottom: 1.5rem;
+}
+
+.profile-form-group .input-group {
+    position: relative;
     display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
+    align-items: center;
+}
+
+.profile-form-group input {
+    width: 100%;
+    padding: 12px 45px 12px 15px; /* Tăng padding-right để chứa button toggle */
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+}
+
+.profile-form-group input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+/* Password Toggle Button cho Profile */
+.profile-form-group .btn-toggle-password {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    padding: 8px;
+    color: var(--text-gray);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2;
+    transition: all 0.2s ease;
+}
+
+.profile-form-group .btn-toggle-password:hover {
+    color: var(--primary);
+}
+
+.profile-form-group .btn-toggle-password i {
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Đảm bảo input password có đủ chỗ cho icon */
+.profile-form-group input[type="password"],
+.profile-form-group input[type="text"] {
+    padding-right: 45px;
 }
 
 .profile-form-group label {
@@ -59,30 +114,15 @@
     font-size: 1rem;
 }
 
-.profile-form-group input {
-    width: 100%;
-    padding: 0.75rem 1rem;
-    border: 1px solid #e5e7eb;
-    border-radius: 0.5rem;
-    font-size: 0.875rem;
-    transition: all 0.3s ease;
-}
-
-.profile-form-group input:focus {
-    outline: none;
-    border-color: #2563eb;
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-}
-
 .profile-form-group input:disabled {
-    background-color: #f9fafb;
+    background-color: #f3f4f6;
     cursor: not-allowed;
 }
 
 /* Button Styles */
 .profile-actions {
     display: flex;
-    gap: 1rem;
+    gap: 10px;
 }
 
 .btn-edit {
@@ -105,6 +145,25 @@
 
 .btn-edit i {
     font-size: 1rem;
+}
+
+.btn-change-password {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: var(--bg-gray);
+    border: none;
+    border-radius: 8px;
+    color: var(--text-dark);
+    font-weight: 500;
+    margin-left: 10px;
+    transition: all 0.3s ease;
+}
+
+.btn-change-password:hover {
+    background: #e5e7eb;
+    transform: translateY(-1px);
 }
 
 .form-actions {
@@ -199,7 +258,7 @@
 }
 
 .profile-success-icon {
-    color: #16a34a;
+    color: #10b981;
     font-size: 3rem;
     margin-bottom: 1rem;
 }
@@ -262,4 +321,16 @@
         width: 100%;
         justify-content: center;
     }
+}
+
+/* Thêm styles mới */
+.verified-badge {
+    display: inline-flex;
+    margin-left: 8px;
+    color: #2563eb;
+    font-size: 1.1rem;
+}
+
+.verified-badge i {
+    color: #2563eb;
 }

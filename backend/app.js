@@ -8,6 +8,7 @@ const locationRoutes = require('./routes/locationRoutes') ;
 const {checkConnection} = require('./config/db');
 const authRoutes  = require('./routes/autRoutes');
 const userRoutes  = require('./routes/userRoutes');
+const adminRouter = require('./routes/adminRouter');
 
 dotenv.config();
 
@@ -30,7 +31,7 @@ app.get('/', (req, res) => {
 app.use('/api/locations', locationRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
-
+app.use('/api/admin', adminRouter);
 
 // Kiểm tra kết nối cơ sở dữ liệu
 checkConnection();

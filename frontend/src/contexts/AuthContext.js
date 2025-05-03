@@ -18,14 +18,15 @@ export const AuthProvider = ({ children }) => {
     }, []);
 
     const login = (userData) => {
-        const fullUserData = {
-            ...userData,
-            fullName: userData.fullName || userData.full_name, 
-            phone: userData.phone
-        };
-        setUser(fullUserData);
+        setUser({
+            id: userData.id,
+            username: userData.username,
+            email: userData.email,
+            fullName: userData.fullName,
+            phone: userData.phone,
+            role: userData.role 
+        });
         setIsAuthenticated(true);
-        localStorage.setItem('user', JSON.stringify(fullUserData));
     };
 
     const logout = () => {

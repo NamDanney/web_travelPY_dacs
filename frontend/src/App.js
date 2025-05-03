@@ -3,6 +3,8 @@ import AppRouter from './router';
 import Header from './components/show/header';
 import Footer from './components/show/footer';
 import { AuthProvider } from './contexts/AuthContext';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const App = () => {
     const [menuOpen, setMenuOpen] = useState(false);
@@ -30,6 +32,7 @@ const App = () => {
                     <AppRouter />
                 </main>
                 <Footer />
+                <ToastContainer />
             </div>
         </AuthProvider>
     );
